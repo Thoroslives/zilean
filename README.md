@@ -26,7 +26,6 @@ All changes beyond upstream v3.5.0:
 
 ### v3.8.0
 - **Increased MaxFilteredResults default** - bumped from 200 to 500. The previous default caused season packs and higher-quality releases to be excluded from search results when a show has many indexed torrents across qualities, languages and groups.
-- **Auto-release CI/CD** - push to main now automatically bumps version, creates a GitHub release with generated notes, and builds/pushes the Docker image.
 
 ### v3.7.0
 - **Security hardening** - warns at startup if PostgreSQL password is empty or set to default "postgres". Docker-compose example no longer exposes Postgres ports.
