@@ -37,4 +37,21 @@ public class DatabaseConfiguration
 
         ConnectionString = builder.ConnectionString;
     }
+
+    /// <summary>
+    /// Returns true if the configured password is empty or a known insecure default.
+    /// </summary>
+    public bool HasInsecurePassword()
+    {
+        try
+        {
+            var parsed = new NpgsqlConnectionStringBuilder(ConnectionString);
+            return string.IsNullOrEmpty(parsed.Password) ||
+                   string.Equals(parsed.Password, "postgres", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

@@ -20,6 +20,7 @@ RUN apk add --update --no-cache \
     curl \
     git \
     icu-libs \
+    tzdata \
     && ln -sf python3 /usr/bin/python
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
@@ -34,5 +35,8 @@ COPY --from=base /build/requirements.txt .
 RUN rm -rf /app/python || true && \
     mkdir -p /app/python || true
 RUN pip3 install -r /app/requirements.txt -t /app/python
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8181/healthchecks/ready || exit 1
 
 ENTRYPOINT ["./zilean-api"]

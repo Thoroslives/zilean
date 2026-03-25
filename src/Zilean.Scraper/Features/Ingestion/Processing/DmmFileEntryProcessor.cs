@@ -28,6 +28,12 @@ public partial class DmmFileEntryProcessor(
 
     private async Task ProduceEntriesAsync(ChannelWriter<Task<ExtractedDmmEntry>> writer, CancellationToken cancellationToken)
     {
+        var totalFiles = _filesToProcess.Count;
+        var processedFiles = 0;
+        var skippedFiles = 0;
+        var newTorrentsFound = 0;
+        var lastProgressLog = Stopwatch.StartNew();
+
         foreach (var file in _filesToProcess)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -39,14 +45,15 @@ public partial class DmmFileEntryProcessor(
             var fileName = Path.GetFileName(file);
             if (ExistingPages.TryGetValue(fileName, out _) || NewPages.TryGetValue(fileName, out _))
             {
+                skippedFiles++;
+                processedFiles++;
                 continue;
             }
-
-            _logger.LogInformation("Processing file: {FileName}", fileName);
 
             try
             {
                 var torrents = await ProcessPageAsync(file, fileName, cancellationToken);
+                newTorrentsFound += torrents.Count;
                 foreach (var torrent in torrents)
                 {
                     await writer.WriteAsync(Task.FromResult(torrent), cancellationToken);
@@ -56,6 +63,24 @@ public partial class DmmFileEntryProcessor(
             {
                 _logger.LogError(ex, "Error processing file: {FileName}", fileName);
             }
+
+            processedFiles++;
+
+            // Log progress every 60 seconds
+            if (lastProgressLog.Elapsed.TotalSeconds >= 60)
+            {
+                var percentage = totalFiles > 0 ? (double)processedFiles / totalFiles * 100 : 0;
+                _logger.LogInformation("DMM sync progress: {Processed}/{Total} files ({Percentage:F1}%), {Skipped} skipped, {NewTorrents} new torrents found",
+                    processedFiles, totalFiles, percentage, skippedFiles, newTorrentsFound);
+                lastProgressLog.Restart();
+            }
+        }
+
+        // Final progress log
+        if (processedFiles > 0)
+        {
+            _logger.LogInformation("DMM sync complete: {Processed}/{Total} files processed, {Skipped} skipped, {NewTorrents} new torrents found",
+                processedFiles, totalFiles, skippedFiles, newTorrentsFound);
         }
 
         writer.Complete();
