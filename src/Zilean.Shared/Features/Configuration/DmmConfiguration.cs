@@ -6,6 +6,6 @@ public class DmmConfiguration
     public bool EnableEndpoint { get; set; } = true;
     public string ScrapeSchedule { get; set; } = "0 * * * *";
     public int MinimumReDownloadIntervalMinutes { get; set; } = 30;
-    public int MaxFilteredResults { get; set; } = 200;
+    public int MaxFilteredResults { get; set; } = 500;
     public double MinimumScoreMatch { get; set; } = 0.85;
 }

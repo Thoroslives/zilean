@@ -53,7 +53,7 @@ _Default: `30`_
 
 **Dmm.MaxFilteredResults**
 _The maximum number of filtered results to return from the DMM Search Endpoints._
-_Default: `200`_
+_Default: `500`_
 
 **Dmm.MinimumScoreMatch**
 _The minimum score match for DMM search results. Closer to 1 means a more exact match has to occur. A value between 1 and 0._

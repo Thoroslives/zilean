@@ -8,7 +8,7 @@
       "EnableEndpoint": true,
       "ScrapeSchedule": "0 * * * *",
       "MinimumReDownloadIntervalMinutes": 30,
-      "MaxFilteredResults": 200,
+      "MaxFilteredResults": 500,
       "MinimumScoreMatch": 0.85
     },
     "Torznab": {

@@ -11,7 +11,7 @@ public class ConfigurationTests
               "EnableEndpoint": true,
               "ScrapeSchedule": "0 * * * *",
               "MinimumReDownloadIntervalMinutes": 30,
-              "MaxFilteredResults": 200,
+              "MaxFilteredResults": 500,
               "MinimumScoreMatch": 0.85,
               "ImportBatched": false
             },
@@ -83,7 +83,7 @@ public class ConfigurationTests
         zileanConfig.Dmm.EnableEndpoint.Should().BeTrue();
         zileanConfig.Dmm.ScrapeSchedule.Should().Be("0 * * * *");
         zileanConfig.Dmm.MinimumReDownloadIntervalMinutes.Should().Be(30);
-        zileanConfig.Dmm.MaxFilteredResults.Should().Be(200);
+        zileanConfig.Dmm.MaxFilteredResults.Should().Be(500);
         zileanConfig.Dmm.MinimumScoreMatch.Should().Be(0.85);
 
         // Torznab
