@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.6.0](https://github.com/Thoroslives/zilean/compare/v3.5.0...v3.6.0) (2026-03-25)
+
+
+### 🚀 New Features
+
+* flexible database connection string configuration ([bdb14ee](https://github.com/Thoroslives/zilean/commit/bdb14ee211902d9ab635e32e6613924619b33fa7))
+* incremental DMM sync via git clone/pull ([935204a](https://github.com/Thoroslives/zilean/commit/935204a283971050457a92cc55f21d6e350d7aca))
+
+
+### 🔥 Bug Fixes
+
+* prevent logging config overwrite on restart ([cd2dee6](https://github.com/Thoroslives/zilean/commit/cd2dee63acb43b6145b975d103eb25a0da384585))
+
+
+### 📚 Documentation
+
+* add PostgreSQL shm_size requirement ([0b2c3a1](https://github.com/Thoroslives/zilean/commit/0b2c3a11a23e2ac2905fc2125b4cada70d80cd5b))
+* update README with new configuration options ([78eb72d](https://github.com/Thoroslives/zilean/commit/78eb72d3d72c48575a505761fe699167abf8257e))
+
+
+### 📦 CI Improvements
+
+* add workflow_dispatch trigger ([a06c926](https://github.com/Thoroslives/zilean/commit/a06c92609a3ac3cf13471800458ae41517758ed5))
+* switch to GHCR and add build verification ([fdf6849](https://github.com/Thoroslives/zilean/commit/fdf6849d409e68a6b9ab68eb44d6270a18a179da))
+* use GITHUB_TOKEN for release-please ([47f37b7](https://github.com/Thoroslives/zilean/commit/47f37b7e8e784550958df65cabfdbb5676d4730a))
+
 ## [3.5.0](https://github.com/iPromKnight/zilean/compare/v3.4.0...v3.5.0) (2025-04-21)
 
 
