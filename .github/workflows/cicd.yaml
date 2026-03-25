@@ -3,7 +3,6 @@ name: CI/CD
 on:
   push:
     branches: [main]
-    tags: ['v[0-9]+.[0-9]+.[0-9]+']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -23,10 +22,36 @@ jobs:
       - run: dotnet restore
       - run: dotnet build --no-restore -c Release
 
-  docker:
+  release:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bump version and push tag
+        id: bump
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          release_branches: main
+      - name: Create GitHub Release
+        if: steps.bump.outputs.new_tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.new_tag }}
+          name: ${{ steps.bump.outputs.new_tag }}
+          generate_release_notes: true
+
+  docker:
+    needs: release
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -46,9 +71,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
+            type=raw,value=${{ needs.release.outputs.tag }},enable=${{ needs.release.outputs.tag != '' }}
             type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
       - uses: docker/build-push-action@v5
         with:
           context: .
