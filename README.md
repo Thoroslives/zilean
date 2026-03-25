@@ -59,6 +59,16 @@ environment:
   - GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 ```
 
+### PostgreSQL Shared Memory
+
+PostgreSQL's default shared memory (`shm_size`) of 64MB is too small for Zilean's bulk DMM upserts. You'll get errors like:
+
+```
+could not resize shared memory segment "/PostgreSQL.xxx" to 67146560 bytes: No space left on device
+```
+
+Set `shm_size: 256m` on your PostgreSQL container to fix this. See the docker-compose example below.
+
 ## Docker Compose Example
 
 ```yaml
