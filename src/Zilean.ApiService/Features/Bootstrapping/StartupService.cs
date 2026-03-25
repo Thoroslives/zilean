@@ -7,7 +7,7 @@ public class StartupService(
     ILoggerFactory loggerFactory) : IHostedLifecycleService
 {
     private const int MaxRetries = 5;
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _retryDelay = TimeSpan.FromSeconds(5);
 
     public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
@@ -62,8 +62,8 @@ public class StartupService(
             catch (Exception ex) when (attempt < MaxRetries)
             {
                 logger.LogWarning("Database connection attempt {Attempt}/{MaxRetries} failed: {Message}. Retrying in {Delay}s...",
-                    attempt, MaxRetries, ex.Message, RetryDelay.TotalSeconds);
-                await Task.Delay(RetryDelay, cancellationToken);
+                    attempt, MaxRetries, ex.Message, _retryDelay.TotalSeconds);
+                await Task.Delay(_retryDelay, cancellationToken);
             }
             catch (Exception ex)
             {
