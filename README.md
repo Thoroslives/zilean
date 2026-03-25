@@ -80,6 +80,7 @@ services:
     image: postgres:16-alpine
     container_name: zilean-postgres
     restart: unless-stopped
+    shm_size: 256m  # required — default 64m causes "No space left on device" during bulk upserts
     volumes:
       - zilean-pg:/var/lib/postgresql/data
     environment:
