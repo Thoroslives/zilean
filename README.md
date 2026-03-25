@@ -24,11 +24,6 @@ ghcr.io/thoroslives/zilean:latest
 
 All changes beyond upstream v3.5.0:
 
-### v3.6.0
-- **Flexible database configuration** - supports `Zilean__Database__ConnectionString` env var (backwards compat), individual `POSTGRES_*` env vars, or sensible defaults. Uses `NpgsqlConnectionStringBuilder` for proper escaping of special characters in passwords.
-- **Incremental DMM sync** - replaces the 1.2GB zip download with `git clone --depth 1` on first run and `git pull` on subsequent runs. Supports `GITHUB_TOKEN` for authenticated requests (5,000 req/hr vs 60). Includes exponential backoff retry.
-- **Logging config preservation** - `logging.json` is only written if it doesn't exist, preserving user customizations across restarts.
-
 ### v3.8.0
 - **Increased MaxFilteredResults default** - bumped from 200 to 500. The previous default caused season packs and higher-quality releases to be excluded from search results when a show has many indexed torrents across qualities, languages and groups.
 - **Auto-release CI/CD** - push to main now automatically bumps version, creates a GitHub release with generated notes, and builds/pushes the Docker image.
@@ -45,6 +40,11 @@ All changes beyond upstream v3.5.0:
 - **Startup config validation** - validates configuration values (cron syntax, numeric ranges, required fields) at startup with clear error messages.
 - **DMM sync progress reporting** - periodic progress logs during sync showing files processed, percentage complete, and new torrents found.
 - **ISystemClock deprecation fix** - removed deprecated `ISystemClock` usage in authentication handler.
+
+### v3.6.0
+- **Flexible database configuration** - supports `Zilean__Database__ConnectionString` env var (backwards compat), individual `POSTGRES_*` env vars, or sensible defaults. Uses `NpgsqlConnectionStringBuilder` for proper escaping of special characters in passwords.
+- **Incremental DMM sync** - replaces the 1.2GB zip download with `git clone --depth 1` on first run and `git pull` on subsequent runs. Supports `GITHUB_TOKEN` for authenticated requests (5,000 req/hr vs 60). Includes exponential backoff retry.
+- **Logging config preservation** - `logging.json` is only written if it doesn't exist, preserving user customizations across restarts.
 
 ## Configuration
 
