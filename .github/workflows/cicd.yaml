@@ -12,6 +12,24 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'tests/**'
+              - 'Dockerfile'
+              - '*.sln'
+              - '**/*.csproj'
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -23,9 +41,9 @@ jobs:
       - run: dotnet build --no-restore -c Release
 
   release:
-    needs: build-and-test
+    needs: [build-and-test, changes]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: needs.changes.outputs.code == 'true'
     permissions:
       contents: write
     outputs:
