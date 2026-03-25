@@ -29,6 +29,10 @@ All changes beyond upstream v3.5.0:
 - **Incremental DMM sync** - replaces the 1.2GB zip download with `git clone --depth 1` on first run and `git pull` on subsequent runs. Supports `GITHUB_TOKEN` for authenticated requests (5,000 req/hr vs 60). Includes exponential backoff retry.
 - **Logging config preservation** - `logging.json` is only written if it doesn't exist, preserving user customizations across restarts.
 
+### v3.8.0
+- **Increased MaxFilteredResults default** - bumped from 200 to 500. The previous default caused season packs and higher-quality releases to be excluded from search results when a show has many indexed torrents across qualities, languages and groups.
+- **Auto-release CI/CD** - push to main now automatically bumps version, creates a GitHub release with generated notes, and builds/pushes the Docker image.
+
 ### v3.7.0
 - **Security hardening** - warns at startup if PostgreSQL password is empty or set to default "postgres". Docker-compose example no longer exposes Postgres ports.
 - **Database startup resilience** - retries database connection up to 5 times with 5-second delays before running migrations. Clear error messages on failure including host and database name.
