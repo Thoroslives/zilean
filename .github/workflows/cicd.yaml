@@ -65,7 +65,7 @@ jobs:
         with:
           tag_name: ${{ steps.bump.outputs.new_tag }}
           name: ${{ steps.bump.outputs.new_tag }}
-          generate_release_notes: true
+          body: ${{ steps.bump.outputs.changelog }}
 
   docker:
     needs: release
