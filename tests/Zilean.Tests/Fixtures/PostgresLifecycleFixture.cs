@@ -34,6 +34,9 @@ public class PostgresLifecycleFixture : IAsyncLifetime
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ZileanDbContext>();
         await TestDataBuilder.SeedAsync(dbContext);
+
+        // Update pg_trgm statistics so trigram similarity search works on seeded data
+        await dbContext.Database.ExecuteSqlRawAsync("ANALYZE \"Torrents\";");
     }
 
     public async Task DisposeAsync()

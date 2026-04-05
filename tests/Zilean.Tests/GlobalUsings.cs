@@ -15,5 +15,6 @@ global using Microsoft.AspNetCore.Mvc.Testing;
 global using Microsoft.Extensions.DependencyInjection;
 global using System.Net;
 global using System.Xml.Linq;
+global using Microsoft.EntityFrameworkCore;
 global using Zilean.Database;
 global using Zilean.Tests.Collections;

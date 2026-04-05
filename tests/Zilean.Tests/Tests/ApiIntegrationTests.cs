@@ -52,7 +52,7 @@ public class ApiIntegrationTests
     }
 
     [Fact]
-    public async Task Torznab_Search_ReturnsValidRssXml()
+    public async Task Torznab_Search_ReturnsResults_WhenDataExists()
     {
         var response = await _client.GetAsync("/torznab/api?t=search&q=The%20Matrix");
 
@@ -62,8 +62,9 @@ public class ApiIntegrationTests
         var doc = XDocument.Parse(body);
         doc.Root.Should().NotBeNull();
         doc.Root!.Name.LocalName.Should().Be("rss");
-        doc.Root!.Attribute("version")!.Value.Should().Be("2.0");
-        doc.Root!.Element("channel").Should().NotBeNull();
+
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().NotBeNullOrEmpty("seeded data includes The Matrix");
     }
 
     [Fact]
