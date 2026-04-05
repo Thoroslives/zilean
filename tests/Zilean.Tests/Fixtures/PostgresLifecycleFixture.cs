@@ -4,7 +4,6 @@ public class PostgresLifecycleFixture : IAsyncLifetime
 {
     private PostgreSqlContainer PostgresContainer { get; } = new PostgreSqlBuilder()
         .WithImage("postgres:16.3-alpine3.20")
-        .WithPortBinding(5432, 5432)
         .WithEnvironment("POSTGRES_USER", "postgres")
         .WithEnvironment("POSTGRES_PASSWORD", "postgres")
         .WithEnvironment("POSTGRES_DB", "zilean")
