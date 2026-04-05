@@ -4,13 +4,13 @@ public class PostgresLifecycleFixture : IAsyncLifetime
 {
     private PostgreSqlContainer PostgresContainer { get; } = new PostgreSqlBuilder()
         .WithImage("postgres:16.3-alpine3.20")
-        .WithPortBinding(5432, 5432)
         .WithEnvironment("POSTGRES_USER", "postgres")
         .WithEnvironment("POSTGRES_PASSWORD", "postgres")
         .WithEnvironment("POSTGRES_DB", "zilean")
         .Build();
 
     public ZileanConfiguration ZileanConfiguration { get; } = new();
+    public ZileanWebApplicationFactory Factory { get; private set; } = null!;
 
     public PostgresLifecycleFixture() =>
         DerivePathInfo(
@@ -22,8 +22,26 @@ public class PostgresLifecycleFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await PostgresContainer.StartAsync();
-        ZileanConfiguration.Database.ConnectionString = PostgresContainer.GetConnectionString();
+        var connectionString = PostgresContainer.GetConnectionString();
+        ZileanConfiguration.Database.ConnectionString = connectionString;
+        Factory = new ZileanWebApplicationFactory(connectionString);
+
+        // Force host startup (runs migrations via StartupService)
+        // CreateClient() blocks until the host is fully started
+        using var client = Factory.CreateClient();
+
+        // Seed test data once, after migrations are applied
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZileanDbContext>();
+        await TestDataBuilder.SeedAsync(dbContext);
+
+        // Update pg_trgm statistics so trigram similarity search works on seeded data
+        await dbContext.Database.ExecuteSqlRawAsync("ANALYZE \"Torrents\";");
     }
 
-    public Task DisposeAsync() => PostgresContainer.DisposeAsync().AsTask();
+    public async Task DisposeAsync()
+    {
+        await Factory.DisposeAsync();
+        await PostgresContainer.DisposeAsync();
+    }
 }

@@ -24,3 +24,6 @@ app.MapZileanEndpoints(zileanConfiguration);
 app.Services.SetupScheduling(zileanConfiguration);
 
 app.Run();
+
+// Make Program accessible to WebApplicationFactory in test project
+public partial class Program;
