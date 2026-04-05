@@ -17,6 +17,7 @@ public class PttPythonTests : IDisposable
         _parseTorrentNameService = new ParseTorrentNameService(loggerParse);
     }
 
+    [Trait("Category", "RequiresPython")]
     [Fact]
     public async Task ParseTorrent_Movie_Success()
     {
@@ -33,6 +34,7 @@ public class PttPythonTests : IDisposable
         result.Should().AllBeOfType<TorrentInfo>();
     }
 
+    [Trait("Category", "RequiresPython")]
     [Fact]
     public async Task ParseTorrent_TvSeries_Success()
     {
