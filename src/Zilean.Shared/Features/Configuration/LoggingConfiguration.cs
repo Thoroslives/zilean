@@ -16,7 +16,7 @@ public static class LoggingConfiguration
                 "System.Net.Http.HttpClient.Scraper.LogicalHandler": "Warning",
                 "System.Net.Http.HttpClient.Scraper.ClientHandler": "Warning",
                 "Microsoft.AspNetCore.Hosting.Diagnostics": "Error",
-                "Microsoft.AspNetCore.DataProtection": "Error",
+                "Microsoft.AspNetCore.DataProtection": "Error"
               }
             }
           }
