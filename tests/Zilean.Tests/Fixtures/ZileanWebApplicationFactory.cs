@@ -45,7 +45,10 @@ public class ZileanWebApplicationFactory : WebApplicationFactory<Program>
             // Leave StartupService intact - it runs migrations and waits for DB.
             var descriptor = services.FirstOrDefault(
                 d => d.ImplementationType == typeof(Zilean.ApiService.Features.Bootstrapping.ConfigurationUpdaterService));
-            if (descriptor != null) services.Remove(descriptor);
+            if (descriptor != null)
+            {
+                services.Remove(descriptor);
+            }
         });
     }
 }

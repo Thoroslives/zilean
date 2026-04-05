@@ -4,7 +4,7 @@ namespace Zilean.Tests.Fixtures;
 
 public static class TestDataBuilder
 {
-    public static readonly TorrentInfo TheMatrix = new()
+    private static readonly TorrentInfo _theMatrix = new()
     {
         InfoHash = "aabbccdd00112233aabb",
         RawTitle = "The.Matrix.1999.2160p.UHD.BluRay.X265-IAMABLE",
@@ -21,7 +21,7 @@ public static class TestDataBuilder
         IngestedAt = DateTime.UtcNow,
     };
 
-    public static readonly TorrentInfo TheWitcherS01E01 = new()
+    private static readonly TorrentInfo _theWitcherS01E01 = new()
     {
         InfoHash = "bbccddee11223344bbcc",
         RawTitle = "The.Witcher.S01E01.1080p.WEB.H264-METCON",
@@ -38,7 +38,7 @@ public static class TestDataBuilder
         IngestedAt = DateTime.UtcNow,
     };
 
-    public static readonly TorrentInfo BreakingBadS05E16 = new()
+    private static readonly TorrentInfo _breakingBadS05E16 = new()
     {
         InfoHash = "ccddeeff22334455ccdd",
         RawTitle = "Breaking.Bad.S05E16.720p.BluRay",
@@ -57,7 +57,7 @@ public static class TestDataBuilder
 
     public static async Task SeedAsync(ZileanDbContext dbContext)
     {
-        dbContext.Torrents.AddRange(TheMatrix, TheWitcherS01E01, BreakingBadS05E16);
+        dbContext.Torrents.AddRange(_theMatrix, _theWitcherS01E01, _breakingBadS05E16);
         await dbContext.SaveChangesAsync();
     }
 }
