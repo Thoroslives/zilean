@@ -11,3 +11,8 @@ global using Zilean.Shared.Features.Dmm;
 global using Zilean.Shared.Features.Imdb;
 global using Zilean.Shared.Features.Scraping;
 global using Zilean.Tests.Fixtures;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Microsoft.Extensions.DependencyInjection;
+global using System.Net;
+global using System.Xml.Linq;
+global using Zilean.Database;

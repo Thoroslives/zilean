@@ -19,6 +19,7 @@
         <PackageReference Include="Verify.Xunit" />
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,6 +28,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Zilean.Scraper\Zilean.Scraper.csproj" />
+      <ProjectReference Include="..\..\src\Zilean.ApiService\Zilean.ApiService.csproj" />
     </ItemGroup>
 
 </Project>
