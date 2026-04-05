@@ -16,3 +16,4 @@ global using Microsoft.Extensions.DependencyInjection;
 global using System.Net;
 global using System.Xml.Linq;
 global using Zilean.Database;
+global using Zilean.Tests.Collections;
