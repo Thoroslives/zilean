@@ -21,6 +21,9 @@ public class ZileanWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ZILEAN_PYTHON_PYLIB", "/dummy/libpython3.so");
         Environment.SetEnvironmentVariable("ZILEAN_PYTHON_VENV", "/dummy/venv");
 
+        // DatabaseConfiguration constructor reads this env var directly, bypassing config binding
+        Environment.SetEnvironmentVariable("Zilean__Database__ConnectionString", _connectionString);
+
         builder.UseEnvironment("Testing");
 
         builder.ConfigureAppConfiguration((context, config) =>

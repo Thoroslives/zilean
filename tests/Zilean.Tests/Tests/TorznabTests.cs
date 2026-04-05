@@ -83,13 +83,13 @@ public class TorznabTests
                 new ReleaseInfo
                 {
                     Title = "Test.Movie.2024.1080p",
-                    InfoHash = "aabbccdd00112233aabb",
+                    InfoHash = "aabbccdd00112233aabb00112233aabbccdd0011",
                     Size = 1500000000,
                     Category = [2000],
                     PublishDate = new DateTime(2024, 1, 15, 12, 0, 0, DateTimeKind.Utc),
                     Imdb = 1234567,
                     Year = 2024,
-                    Magnet = new Uri("magnet:?xt=urn:btih:aabbccdd00112233aabb"),
+                    Magnet = new Uri("magnet:?xt=urn:btih:aabbccdd00112233aabb00112233aabbccdd0011"),
                 }
             ]
         };
