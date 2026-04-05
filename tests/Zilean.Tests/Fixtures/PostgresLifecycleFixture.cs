@@ -10,6 +10,7 @@ public class PostgresLifecycleFixture : IAsyncLifetime
         .Build();
 
     public ZileanConfiguration ZileanConfiguration { get; } = new();
+    public ZileanWebApplicationFactory Factory { get; private set; } = null!;
 
     public PostgresLifecycleFixture() =>
         DerivePathInfo(
@@ -21,8 +22,23 @@ public class PostgresLifecycleFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await PostgresContainer.StartAsync();
-        ZileanConfiguration.Database.ConnectionString = PostgresContainer.GetConnectionString();
+        var connectionString = PostgresContainer.GetConnectionString();
+        ZileanConfiguration.Database.ConnectionString = connectionString;
+        Factory = new ZileanWebApplicationFactory(connectionString);
+
+        // Force host startup (runs migrations via StartupService)
+        // CreateClient() blocks until the host is fully started
+        using var client = Factory.CreateClient();
+
+        // Seed test data once, after migrations are applied
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ZileanDbContext>();
+        await TestDataBuilder.SeedAsync(dbContext);
     }
 
-    public Task DisposeAsync() => PostgresContainer.DisposeAsync().AsTask();
+    public async Task DisposeAsync()
+    {
+        await Factory.DisposeAsync();
+        await PostgresContainer.DisposeAsync();
+    }
 }
