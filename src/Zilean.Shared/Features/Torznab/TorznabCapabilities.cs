@@ -25,6 +25,11 @@ public static class TorznabCapabilities
         XxxSearch.ImdbId
     ];
 
+    public static List<BookSearch> BookSearchParams { get; } =
+    [
+        BookSearch.Q,
+    ];
+
     public static int LimitsMax { get; } = 5000;
     public static int LimitsDefault { get; } = 100;
     public static bool SearchAvailable { get; } = true;
@@ -40,12 +45,15 @@ public static class TorznabCapabilities
     public static bool XxxSearchAvailable => XxxSearchParams.Count > 0;
     public static bool XxxSearchImdbAvailable => XxxSearchParams.Contains(XxxSearch.ImdbId);
     public static bool XxxSearchYearAvailable => XxxSearchParams.Contains(XxxSearch.Year);
+    public static bool BookSearchAvailable => BookSearchParams.Count > 0;
 
     public static List<TorznabCategory> Categories { get; } =
     [
         TorznabCategoryTypes.Movies,
+        TorznabCategoryTypes.Audio,
         TorznabCategoryTypes.TV,
         TorznabCategoryTypes.XXX,
+        TorznabCategoryTypes.Books,
     ];
 
     public static string ToXml() =>
@@ -82,6 +90,11 @@ public static class TorznabCapabilities
                     new XElement("xxx-search",
                         new XAttribute("available", XxxSearchAvailable ? "yes" : "no"),
                         new XAttribute("supportedParams", SupportedXxxSearchParams()),
+                        SupportsRawSearch ? new XAttribute("searchEngine", "raw") : null
+                    )
+                    ,new XElement("book-search",
+                        new XAttribute("available", BookSearchAvailable ? "yes" : "no"),
+                        new XAttribute("supportedParams", SupportedBookSearchParams()),
                         SupportsRawSearch ? new XAttribute("searchEngine", "raw") : null
                     )
                 ),
@@ -159,6 +172,13 @@ public static class TorznabCapabilities
         {
             parameters.Add("year");
         }
+
+        return string.Join(",", parameters);
+    }
+
+    private static string SupportedBookSearchParams()
+    {
+        var parameters = new List<string> { "q" };
 
         return string.Join(",", parameters);
     }

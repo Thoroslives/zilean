@@ -74,6 +74,65 @@ public class TorznabTests
     }
 
     [Fact]
+    public void Caps_ToXml_ContainsBooksCategory()
+    {
+        var xml = TorznabCapabilities.ToXml();
+        var doc = XDocument.Parse(xml);
+
+        var categories = doc.Root!.Element("categories")!.Elements("category");
+        var booksCategory = categories.FirstOrDefault(c => c.Attribute("id")!.Value == "7000");
+
+        booksCategory.Should().NotBeNull("Books (7000) should be in capabilities");
+        booksCategory!.Attribute("name")!.Value.Should().Be("Books");
+        booksCategory.Elements("subcat").Should().NotBeEmpty("Books should have subcategories");
+    }
+
+    [Fact]
+    public void Caps_ToXml_ContainsAudioCategory()
+    {
+        var xml = TorznabCapabilities.ToXml();
+        var doc = XDocument.Parse(xml);
+
+        var categories = doc.Root!.Element("categories")!.Elements("category");
+        var audioCategory = categories.FirstOrDefault(c => c.Attribute("id")!.Value == "3000");
+
+        audioCategory.Should().NotBeNull("Audio (3000) should be in capabilities");
+        audioCategory!.Attribute("name")!.Value.Should().Be("Audio");
+
+        var audiobookSubcat = audioCategory.Elements("subcat")
+            .FirstOrDefault(sc => sc.Attribute("id")!.Value == "3030");
+        audiobookSubcat.Should().NotBeNull("Audio/Audiobook (3030) should be a subcategory");
+    }
+
+    [Fact]
+    public void Caps_ToXml_ContainsBookSearch()
+    {
+        var xml = TorznabCapabilities.ToXml();
+        var doc = XDocument.Parse(xml);
+
+        var searching = doc.Root!.Element("searching");
+        var bookSearch = searching!.Element("book-search");
+
+        bookSearch.Should().NotBeNull("book-search should be in capabilities");
+        bookSearch!.Attribute("available")!.Value.Should().Be("yes");
+        bookSearch!.Attribute("supportedParams")!.Value.Should().Be("q");
+    }
+
+    [Fact]
+    public void Query_IsBookSearch_WhenQueryTypeIsBookSearch()
+    {
+        var query = new TorznabQuery
+        {
+            QueryType = "book-search",
+            SearchTerm = "Mistborn",
+        };
+
+        query.IsBookSearch.Should().BeTrue();
+        query.IsMovieSearch.Should().BeFalse();
+        query.IsTVSearch.Should().BeFalse();
+    }
+
+    [Fact]
     public void ResultPage_ToXml_ValidRssWithTorznabNamespace()
     {
         var page = new ResultPage
