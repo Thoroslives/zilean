@@ -2,9 +2,9 @@
 
 <img src="docs/Writerside/images/zilean-logo.jpg" alt="zilean logo" width="300" height="300">
 
-Zilean is a service that allows you to search for [DebridMediaManager](https://github.com/debridmediamanager/debrid-media-manager) sourced content shared by users.
-This can then be configured as a Torznab indexer in your favorite content application.
-Newly added is the ability for Zilean to scrape from your running Zurg instance, and from other running Zilean instances.
+Zilean is a Torznab indexer for [DebridMediaManager](https://github.com/debridmediamanager/debrid-media-manager) sourced content shared by users.
+It supports films, TV, books, and audiobooks through a single Torznab API, and can be configured as an indexer in Prowlarr, Sonarr, Radarr, Shelfarr, and other *arr applications.
+It can also scrape from your running Zurg instance and from other running Zilean instances.
 
 This is an actively maintained fork of [iPromKnight/zilean](https://github.com/iPromKnight/zilean) (v3.5.0, last upstream commit May 2025).
 
@@ -22,28 +22,9 @@ ghcr.io/thoroslives/zilean:latest
 
 ## Fork Changes
 
-All changes beyond upstream v3.5.0:
+This is an actively maintained fork with improvements to reliability, search quality, security, and media type support. Key additions include book/audiobook category detection, graceful degradation, incremental DMM sync, and flexible database configuration.
 
-### v3.8.0
-- **Increased MaxFilteredResults default** - bumped from 200 to 500. The previous default caused season packs and higher-quality releases to be excluded from search results when a show has many indexed torrents across qualities, languages and groups.
-
-### v3.7.0
-- **Security hardening** - warns at startup if PostgreSQL password is empty or set to default "postgres". Docker-compose example no longer exposes Postgres ports.
-- **Database startup resilience** - retries database connection up to 5 times with 5-second delays before running migrations. Clear error messages on failure including host and database name.
-- **Filtered search fix** - `/dmm/filtered` with short query strings (e.g., "1923") combined with season/episode filters no longer returns 0 results. Similarity threshold is automatically lowered when structured filters provide precision.
-- **Scraping toggle fix** - setting `EnableScraping=false` now correctly hides the on-demand-scrape endpoint while keeping search endpoints functional.
-- **Timezone support** - set `TZ` env var (e.g., `TZ=Australia/Sydney`) to display log timestamps in your local timezone. `tzdata` package included in the image.
-- **Readiness health check** - new `/healthchecks/ready` endpoint that verifies database connectivity. Used by the Dockerfile HEALTHCHECK for orchestrator integration.
-- **HEALTHCHECK instruction** - Docker image includes a built-in health check (30s interval, 60s start period) so orchestrators can detect readiness.
-- **Graceful error handling** - database errors no longer kill the process immediately (`Process.Kill()` replaced with proper exception propagation). Search errors are logged instead of silently swallowed.
-- **Startup config validation** - validates configuration values (cron syntax, numeric ranges, required fields) at startup with clear error messages.
-- **DMM sync progress reporting** - periodic progress logs during sync showing files processed, percentage complete, and new torrents found.
-- **ISystemClock deprecation fix** - removed deprecated `ISystemClock` usage in authentication handler.
-
-### v3.6.0
-- **Flexible database configuration** - supports `Zilean__Database__ConnectionString` env var (backwards compat), individual `POSTGRES_*` env vars, or sensible defaults. Uses `NpgsqlConnectionStringBuilder` for proper escaping of special characters in passwords.
-- **Incremental DMM sync** - replaces the 1.2GB zip download with `git clone --depth 1` on first run and `git pull` on subsequent runs. Supports `GITHUB_TOKEN` for authenticated requests (5,000 req/hr vs 60). Includes exponential backoff retry.
-- **Logging config preservation** - `logging.json` is only written if it doesn't exist, preserving user customizations across restarts.
+See [Releases](https://github.com/Thoroslives/zilean/releases) for the full changelog.
 
 ## Configuration
 
@@ -130,6 +111,18 @@ For high-availability or high-traffic setups, you can run multiple Zilean instan
 - `PreventOverlapping("SyncJobs")` prevents concurrent scraping within an instance
 - PostgreSQL's default `max_connections=100` is sufficient for typical deployments
 
+## Supported Categories
+
+| Category | Torznab ID | Search Type | Detection |
+|----------|-----------|-------------|-----------|
+| Movies | 2000 | `movie` | RTN media type |
+| TV | 5000 | `tvsearch` | RTN media type |
+| Books | 7000 | `book-search` | File extension (`.epub`, `.mobi`, `.azw3`, `.cbr`, `.cbz`) and title keywords (`ebook`, `epub`, etc.) |
+| Audiobooks | 3030 | `search` with `cat=3030` | File extension (`.m4b`) and title keywords (`audiobook`, `narrated by`, `unabridged`, `abridged`) |
+| XXX | 6000 | `xxx` | RTN adult flag |
+
+Book and audiobook detection runs as post-RTN heuristics during ingestion. Existing records are reclassified as they are re-ingested during hourly DMM syncs.
+
 ## Health Checks
 
 - `/healthchecks/ping` - lightweight liveness check (always returns 200)
@@ -152,6 +145,7 @@ Set `shm_size: 256m` on your PostgreSQL container. See the docker-compose exampl
 
 - Ensure the initial DMM sync has completed (check logs for "DMM sync complete")
 - For filtered searches with short titles, the similarity threshold is automatically adjusted
+- **Book/audiobook searches:** these categories are only populated after torrents are ingested with the v4.0.0+ detection heuristics. Existing records from earlier versions retain their original category until re-ingested during the hourly DMM sync
 
 ## Docker Compose Example
 
