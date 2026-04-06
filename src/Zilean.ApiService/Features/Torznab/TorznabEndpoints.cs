@@ -144,6 +144,7 @@ public static class TorznabEndpoints
                 "movie" => "movie",
                 "tvSearch" => "tvSeries",
                 "xxx" => "xxx",
+                "book-search" => "book",
                 _ => null
             }
             : queryCategories.Length == 0
@@ -157,7 +158,13 @@ public static class TorznabEndpoints
                         : queryCategories.Contains(TorznabCategoryTypes.XXX.Id) ||
                           TorznabCategoryTypes.XXX.SubCategories.Any(c => queryCategories.Contains(c.Id))
                             ? "xxx"
-                            : null;
+                            : queryCategories.Contains(TorznabCategoryTypes.Books.Id) ||
+                              TorznabCategoryTypes.Books.SubCategories.Any(c => queryCategories.Contains(c.Id))
+                                ? "book"
+                                : queryCategories.Contains(TorznabCategoryTypes.Audio.Id) ||
+                                  queryCategories.Contains(TorznabCategoryTypes.AudioAudiobook.Id)
+                                    ? "audiobook"
+                                    : null;
 
     private static ICollection<int> GetCategory(string dbCategory) =>
         dbCategory switch
@@ -165,6 +172,8 @@ public static class TorznabEndpoints
             "tvSeries" => [TorznabCategoryTypes.TV.Id],
             "xxx" => [TorznabCategoryTypes.XXX.Id],
             "movie" => [TorznabCategoryTypes.Movies.Id],
+            "book" => [TorznabCategoryTypes.Books.Id],
+            "audiobook" => [TorznabCategoryTypes.AudioAudiobook.Id],
             _ => [TorznabCategoryTypes.Movies.Id]
         };
 
