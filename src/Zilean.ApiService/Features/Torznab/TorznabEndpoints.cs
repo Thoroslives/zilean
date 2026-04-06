@@ -122,7 +122,7 @@ public static class TorznabEndpoints
             Magnet = Parsing.GetMagnetLink(t.InfoHash),
             InfoHash = t.InfoHash,
             PublishDate = t.IngestedAt,
-            Size = Parsing.GetBytes(t.Size),
+            Size = t.Size is not null ? Parsing.GetBytes(t.Size) : 0,
             Category = GetCategory(t.Category),
             Imdb = Parsing.GetImdbId(t.ImdbId),
         });
