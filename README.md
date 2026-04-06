@@ -24,6 +24,18 @@ ghcr.io/thoroslives/zilean:latest
 
 All changes beyond upstream v3.5.0:
 
+### v4.0.0
+- **Book and audiobook category support** - post-RTN heuristics classify torrents as `book` or `audiobook` based on file extension (`.epub`, `.mobi`, `.azw3`, `.cbr`, `.cbz`, `.m4b`) and title keywords (`ebook`, `audiobook`, `narrated by`, etc.). Previously all non-video content was miscategorized as movies.
+- **Torznab book-search** - new `book-search` query type with `q` parameter. Books (7000) and Audio (3000) categories exposed in capabilities XML. Prowlarr/Shelfarr can discover and search book/audiobook content.
+- **Book-optimized search threshold** - trigram similarity threshold is lowered for book/audiobook searches, since book titles include author names and format tags that reduce similarity scores for keyword searches.
+- **Dashboard category dropdown** - book and audiobook categories available for manual re-categorization.
+
+### v3.9.0
+- **Graceful degradation** - replaced 5 instances of `Process.Kill()` and `Environment.Exit()` with proper exception handling. API stays up when Python engine fails; dashboard re-parse is disabled; Torznab keeps serving indexed data.
+- **Readiness endpoint** - new `/healthchecks/ready` endpoint reports database and Python engine status as JSON, separate from the existing `/healthchecks/ping` liveness probe.
+- **Null safety** - null-coalesced `Size` field in Torznab endpoint to prevent `NullReferenceException` when `TorrentInfo.Size` is null.
+- **EF Core design-time factory** - replaced hardcoded `OnConfiguring` fallback with proper `IDesignTimeDbContextFactory` for `dotnet ef` tooling.
+
 ### v3.8.0
 - **Increased MaxFilteredResults default** - bumped from 200 to 500. The previous default caused season packs and higher-quality releases to be excluded from search results when a show has many indexed torrents across qualities, languages and groups.
 
