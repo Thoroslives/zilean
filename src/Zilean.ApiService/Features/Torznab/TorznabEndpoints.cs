@@ -138,7 +138,7 @@ public static class TorznabEndpoints
     }
 
     private static string? GetFromTorznabCategories(int[] queryCategories, string? queryQueryType) =>
-        !queryQueryType.IsNullOrWhiteSpace()
+        !queryQueryType.IsNullOrWhiteSpace() && queryQueryType != "search"
             ? queryQueryType switch
             {
                 "movie" => "movie",
