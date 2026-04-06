@@ -76,9 +76,14 @@ public class SearchTorrentsMetaV6
             -- lower the similarity threshold since the filters themselves provide precision.
             -- This fixes short query strings (e.g. "1923") returning 0 results when combined
             -- with season/episode filters, because trigram similarity is unreliable for short strings.
+            --
+            -- Book/audiobook searches also get a lower threshold because their titles include
+            -- author names and format tags, reducing trigram similarity for keyword searches.
             has_filters := (season IS NOT NULL OR episode IS NOT NULL OR year IS NOT NULL OR imdbId IS NOT NULL);
 
-            IF has_filters AND query IS NOT NULL AND length(query) <= 6 THEN
+            IF category IN ('book', 'audiobook') THEN
+                effective_threshold := similarity_threshold * 0.35;
+            ELSIF has_filters AND query IS NOT NULL AND length(query) <= 6 THEN
                 effective_threshold := similarity_threshold * 0.3;
             ELSIF has_filters THEN
                 effective_threshold := similarity_threshold * 0.5;
