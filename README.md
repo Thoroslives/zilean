@@ -146,6 +146,7 @@ Set `shm_size: 256m` on your PostgreSQL container. See the docker-compose exampl
 - Ensure the initial DMM sync has completed (check logs for "DMM sync complete")
 - For filtered searches with short titles, the similarity threshold is automatically adjusted
 - **Book/audiobook searches:** these categories are only populated after torrents are ingested with the v4.0.0+ detection heuristics. Existing records from earlier versions retain their original category until re-ingested during the hourly DMM sync
+- **Short queries return fewer results:** Zilean uses trigram similarity matching. Single-word queries like "dune" may not match longer titles like "Dune - Audiobook Collection" because the similarity score is too low. Use more specific queries (e.g. "dune audiobook") for better results. This applies to all categories, not just books
 
 ## Docker Compose Example
 
