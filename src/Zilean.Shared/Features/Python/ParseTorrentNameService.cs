@@ -8,6 +8,7 @@ public class ParseTorrentNameService
     private bool _isInitialized;
     private dynamic? _sys;
     private readonly ILogger<ParseTorrentNameService> _logger;
+    public bool IsAvailable => _initAsync.IsCompletedSuccessfully;
 
     private const string ParserScript =
         """
@@ -97,6 +98,8 @@ public class ParseTorrentNameService
 
     public async Task StopPythonEngine()
     {
+        if (!IsAvailable) return;
+
         await _initAsync;
         _sys.Dispose();
 
@@ -304,9 +307,8 @@ public class ParseTorrentNameService
                 var pathToVirtualEnv = Environment.GetEnvironmentVariable("ZILEAN_PYTHON_VENV") ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(pathToVirtualEnv))
                 {
-                    _logger.LogWarning("`ZILEAN_PYTHON_VENV` env is not set. Exiting Application");
-                    Environment.Exit(1);
-                    return Task.CompletedTask;
+                    _logger.LogError("`ZILEAN_PYTHON_VENV` env is not set. Python engine will be unavailable.");
+                    return Task.FromException(new InvalidOperationException("ZILEAN_PYTHON_VENV environment variable is not set."));
                 }
 
                 var path = Environment.GetEnvironmentVariable("PATH").TrimEnd(';');
@@ -322,9 +324,8 @@ public class ParseTorrentNameService
 
             if (string.IsNullOrWhiteSpace(pythonDllEnv))
             {
-                _logger.LogWarning("`ZILEAN_PYTHON_PYLIB` env is not set. Exiting Application");
-                Environment.Exit(1);
-                return Task.CompletedTask;
+                _logger.LogError("`ZILEAN_PYTHON_PYLIB` env is not set. Python engine will be unavailable.");
+                return Task.FromException(new InvalidOperationException("ZILEAN_PYTHON_PYLIB environment variable is not set."));
             }
 
             Runtime.PythonDLL = pythonDllEnv;
@@ -340,7 +341,7 @@ public class ParseTorrentNameService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to initialize Python engine: {Message}", e.Message);
-            Environment.Exit(1);
+            return Task.FromException(e);
         }
 
         return Task.CompletedTask;

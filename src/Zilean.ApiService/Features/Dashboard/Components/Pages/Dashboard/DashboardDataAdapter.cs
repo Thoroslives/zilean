@@ -171,8 +171,15 @@ public class DashboardDataAdapter(IServiceProvider serviceProvider, ParseTorrent
 
     private async Task<TorrentInfo> UpdateTorrentAttributes(DashboardTorrentDetails incoming, TorrentInfo torrent, bool isCreate = false)
     {
-        torrent = await parseTorrentNameService.ParseAndPopulateTorrentInfoAsync(torrent);
-        torrent.CleanedParsedTitle = Parsing.CleanQuery(torrent.ParsedTitle);
+        try
+        {
+            torrent = await parseTorrentNameService.ParseAndPopulateTorrentInfoAsync(torrent);
+            torrent.CleanedParsedTitle = Parsing.CleanQuery(torrent.ParsedTitle);
+        }
+        catch (Exception) when (!parseTorrentNameService.IsAvailable)
+        {
+            logger.LogWarning("Python engine unavailable - dashboard re-parse disabled. Keeping existing torrent data.");
+        }
 
         if (isCreate)
         {

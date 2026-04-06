@@ -14,8 +14,7 @@ public class EnsureMigrated(ImdbMetadataLoader metadataLoader, ILogger<EnsureMig
 
             if (imdbLoadedResult == 1)
             {
-                Environment.ExitCode = 1;
-                Process.GetCurrentProcess().Kill();
+                throw new InvalidOperationException("IMDB metadata load failed. Cannot proceed with scraping.");
             }
         }
     }
