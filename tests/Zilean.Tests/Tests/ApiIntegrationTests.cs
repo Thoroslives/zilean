@@ -93,4 +93,61 @@ public class ApiIntegrationTests
         results.Should().NotBeNull();
         results!.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Torznab_Caps_ContainsBookAndAudioCategories()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=caps");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        var doc = XDocument.Parse(body);
+
+        var categories = doc.Root!.Element("categories")!.Elements("category");
+        categories.Should().Contain(c => c.Attribute("id")!.Value == "7000", "Books category should be present");
+        categories.Should().Contain(c => c.Attribute("id")!.Value == "3000", "Audio category should be present");
+
+        var searching = doc.Root!.Element("searching");
+        searching!.Element("book-search").Should().NotBeNull("book-search should be in caps");
+        searching!.Element("book-search")!.Attribute("available")!.Value.Should().Be("yes");
+    }
+
+    [Fact]
+    public async Task Torznab_BookSearch_ReturnsBookResults()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=book-search&q=Mistborn");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        var doc = XDocument.Parse(body);
+
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().NotBeNullOrEmpty("seeded data includes Mistborn EPUB");
+    }
+
+    [Fact]
+    public async Task Torznab_AudiobookSearch_ByCategory_ReturnsAudiobookResults()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=search&cat=3030&q=Dune");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        var doc = XDocument.Parse(body);
+
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().NotBeNullOrEmpty("seeded data includes Dune Audiobook");
+    }
+
+    [Fact]
+    public async Task Torznab_MovieSearch_DoesNotReturnBooks()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=movie&q=Mistborn");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        var doc = XDocument.Parse(body);
+
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().BeNullOrEmpty("books should not appear in movie search");
+    }
 }

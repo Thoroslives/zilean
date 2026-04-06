@@ -58,9 +58,47 @@ public static class TestDataBuilder
         IngestedAt = DateTime.UtcNow,
     };
 
+    private static readonly TorrentInfo _mistbornEpub = new()
+    {
+        InfoHash = "ddeeff0033445566ddee33445566ddeeff004444",
+        RawTitle = "Brandon.Sanderson.Mistborn.The.Final.Empire.EPUB",
+        ParsedTitle = "Brandon Sanderson Mistborn The Final Empire",
+        NormalizedTitle = "brandon sanderson mistborn the final empire",
+        CleanedParsedTitle = "brandon sanderson mistborn final empire",
+        Category = "book",
+        Year = 2006,
+        Resolution = null,
+        ImdbId = null,
+        Size = "2.1 MB",
+        Seasons = [],
+        Episodes = [],
+        Languages = ["English"],
+        Extension = ".epub",
+        IngestedAt = DateTime.UtcNow,
+    };
+
+    private static readonly TorrentInfo _duneAudiobook = new()
+    {
+        InfoHash = "eeff001144556677eeff44556677eeff00115555",
+        RawTitle = "Frank.Herbert.Dune.Audiobook.Unabridged.M4B",
+        ParsedTitle = "Frank Herbert Dune",
+        NormalizedTitle = "frank herbert dune",
+        CleanedParsedTitle = "frank herbert dune",
+        Category = "audiobook",
+        Year = 1965,
+        Resolution = null,
+        ImdbId = null,
+        Size = "850 MB",
+        Seasons = [],
+        Episodes = [],
+        Languages = ["English"],
+        Extension = ".m4b",
+        IngestedAt = DateTime.UtcNow,
+    };
+
     public static async Task SeedAsync(ZileanDbContext dbContext)
     {
-        dbContext.Torrents.AddRange(_theMatrix, _theWitcherS01E01, _breakingBadS05E16);
+        dbContext.Torrents.AddRange(_theMatrix, _theWitcherS01E01, _breakingBadS05E16, _mistbornEpub, _duneAudiobook);
         await dbContext.SaveChangesAsync();
     }
 }
