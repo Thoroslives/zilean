@@ -29,7 +29,15 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
         await using var connection = new NpgsqlConnection(Configuration.Database.ConnectionString);
         var imdbMatchingService = serviceScope.ServiceProvider.GetRequiredService<IImdbMatchingService>();
 
-        await imdbMatchingService.PopulateImdbData();
+        // PopulateImdbData is idempotent and the matcher is a singleton,
+        // so this is a no-op after the first ingestion batch in the process.
+        // Don't dispose at the end of the method - keep the in-memory state hot
+        // for subsequent batches. ResyncImdbCommand handles its own lifecycle
+        // when refreshing IMDb data.
+        if (Configuration.Imdb.EnableImportMatching)
+        {
+            await imdbMatchingService.PopulateImdbData();
+        }
 
         var bulkConfig = new BulkConfig
         {
@@ -60,8 +68,6 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
             logger.LogInformation("Storing batch {CurrentBatch} of {TotalBatches}", currentBatch, chunks.Count);
             await dbContext.BulkInsertOrUpdateAsync(batch, bulkConfig);
         }
-
-        imdbMatchingService.DisposeImdbData();
     }
 
     public async Task<TorrentInfo[]> SearchForTorrentInfoByOnlyTitle(string query)

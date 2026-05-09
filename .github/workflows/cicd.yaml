@@ -40,7 +40,7 @@ jobs:
       - run: dotnet restore
       - run: dotnet build --no-restore -c Release
       - run: docker pull postgres:16.3-alpine3.20
-      - run: dotnet test --no-build -c Release --filter "Category!=RequiresPython" --logger "console;verbosity=normal"
+      - run: dotnet test --no-build -c Release --filter "Category!=RequiresPython&Category!=Benchmark" --logger "console;verbosity=normal"
 
   release:
     needs: [build-and-test, changes]

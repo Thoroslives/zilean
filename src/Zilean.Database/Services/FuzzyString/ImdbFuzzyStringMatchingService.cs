@@ -1,37 +1,71 @@
+using Microsoft.Extensions.Caching.Memory;
 using Raffinert.FuzzySharp;
 using Raffinert.FuzzySharp.PreProcess;
+using Zilean.Database.Services.Common;
 using Zilean.Shared.Extensions;
 
 namespace Zilean.Database.Services.FuzzyString;
 
 public class ImdbFuzzyStringMatchingService(ILogger<ImdbFuzzyStringMatchingService> logger, ZileanConfiguration configuration) : IImdbMatchingService
 {
-    private ConcurrentDictionary<string, string?>? _imdbCache;
+    private MemoryCache? _imdbCache;
     private ConcurrentDictionary<int,List<ImdbFile>>? _imdbTvFiles;
     private ConcurrentDictionary<int,List<ImdbFile>>? _imdbMovieFiles;
+    private int _initializationCount;
+    private readonly SnapshotStalenessTracker _staleness = new(logger);
+    private readonly SemaphoreSlim _populateLock = new(1, 1);
+    private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { Size = 1 };
     private const double ExactMatchTitleYearScore = 2.0;
     private const double CloseMatchTitleYearScore = 1.5;
 
+    internal int InitializationCount => _initializationCount;
+
     public async Task PopulateImdbData()
     {
-        _imdbTvFiles = await GetImdbTvFiles();
-        _imdbMovieFiles = await GetImdbMovieFiles();
-        _imdbCache = new();
+        if (_imdbCache is not null)
+        {
+            return;
+        }
+
+        await _populateLock.WaitAsync();
+        try
+        {
+            if (_imdbCache is not null)
+            {
+                return;
+            }
+
+            _imdbTvFiles = await GetImdbTvFiles();
+            _imdbMovieFiles = await GetImdbMovieFiles();
+            _imdbCache = new MemoryCache(new MemoryCacheOptions
+            {
+                SizeLimit = ImdbCacheConfig.ResolveCacheSize(configuration.Imdb.MatchCacheSize, logger),
+            });
+            _staleness.MarkPopulated();
+            _initializationCount++;
+        }
+        finally
+        {
+            _populateLock.Release();
+        }
     }
 
     public void DisposeImdbData()
     {
-        _imdbTvFiles.Clear();
-        _imdbMovieFiles.Clear();
-        _imdbCache.Clear();
+        _imdbTvFiles?.Clear();
+        _imdbMovieFiles?.Clear();
+        _imdbCache?.Dispose();
 
         _imdbTvFiles = null;
         _imdbMovieFiles = null;
         _imdbCache = null;
+        _staleness.Reset();
     }
 
     public Task<ConcurrentQueue<TorrentInfo>> MatchImdbIdsForBatchAsync(IEnumerable<TorrentInfo> batch)
     {
+        _staleness.WarnIfStale(configuration.Imdb.SnapshotMaxAgeHours);
+
         var parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = configuration.Imdb.UseAllCores switch
@@ -46,7 +80,7 @@ public class ImdbFuzzyStringMatchingService(ILogger<ImdbFuzzyStringMatchingServi
         Parallel.ForEach(
             batch, parallelOptions, (torrent, _) =>
             {
-                if (_imdbCache.TryGetValue(torrent.CacheKey(), out var imdbId))
+                if (_imdbCache!.TryGetValue<string?>(torrent.CacheKey(), out var imdbId))
                 {
                     torrent.ImdbId = imdbId;
                     return;
@@ -99,7 +133,7 @@ public class ImdbFuzzyStringMatchingService(ILogger<ImdbFuzzyStringMatchingServi
 
                     torrent.ImdbId = bestMatch.ImdbId;
 
-                    _imdbCache[torrent.CacheKey()] = bestMatch.ImdbId;
+                    _imdbCache!.Set(torrent.CacheKey(), bestMatch.ImdbId, _cacheEntryOptions);
 
                     updatedTorrents.Enqueue(torrent);
 

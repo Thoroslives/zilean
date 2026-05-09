@@ -80,6 +80,11 @@ public class ResyncImdbCommand(
 
         if (processableTorrents.Count > 0)
         {
+            // Drop any in-memory state from prior ingestion runs so the resync
+            // sees the freshly-loaded IMDb data (imdbLoader.Execute above just
+            // refreshed the ImdbFiles table). Without this, the singleton matcher
+            // would return early from PopulateImdbData and reuse stale entries.
+            imdbMatchingService.DisposeImdbData();
             await imdbMatchingService.PopulateImdbData();
 
             logger.LogInformation("Starting to process torrents...");
