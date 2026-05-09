@@ -9,21 +9,44 @@ public class ImdbFuzzyStringMatchingService(ILogger<ImdbFuzzyStringMatchingServi
     private ConcurrentDictionary<string, string?>? _imdbCache;
     private ConcurrentDictionary<int,List<ImdbFile>>? _imdbTvFiles;
     private ConcurrentDictionary<int,List<ImdbFile>>? _imdbMovieFiles;
+    private int _initializationCount;
+    private readonly SemaphoreSlim _populateLock = new(1, 1);
     private const double ExactMatchTitleYearScore = 2.0;
     private const double CloseMatchTitleYearScore = 1.5;
 
+    internal int InitializationCount => _initializationCount;
+
     public async Task PopulateImdbData()
     {
-        _imdbTvFiles = await GetImdbTvFiles();
-        _imdbMovieFiles = await GetImdbMovieFiles();
-        _imdbCache = new();
+        if (_imdbCache is not null)
+        {
+            return;
+        }
+
+        await _populateLock.WaitAsync();
+        try
+        {
+            if (_imdbCache is not null)
+            {
+                return;
+            }
+
+            _imdbTvFiles = await GetImdbTvFiles();
+            _imdbMovieFiles = await GetImdbMovieFiles();
+            _imdbCache = new();
+            _initializationCount++;
+        }
+        finally
+        {
+            _populateLock.Release();
+        }
     }
 
     public void DisposeImdbData()
     {
-        _imdbTvFiles.Clear();
-        _imdbMovieFiles.Clear();
-        _imdbCache.Clear();
+        _imdbTvFiles?.Clear();
+        _imdbMovieFiles?.Clear();
+        _imdbCache?.Clear();
 
         _imdbTvFiles = null;
         _imdbMovieFiles = null;

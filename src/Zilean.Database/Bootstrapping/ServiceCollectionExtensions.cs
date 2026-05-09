@@ -14,12 +14,15 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterImdbMatchingService(this IServiceCollection services, ZileanConfiguration configuration)
     {
+        // Singleton so the in-memory IMDb data (Lucene index or partitioned dictionaries)
+        // is populated once per process and reused across every batch in an ingestion run,
+        // instead of being rebuilt per 5K-torrent batch in TorrentInfoService.StoreTorrentInfo.
         if (configuration.Imdb.UseLucene)
         {
-            services.AddTransient<IImdbMatchingService, ImdbLuceneMatchingService>();
+            services.AddSingleton<IImdbMatchingService, ImdbLuceneMatchingService>();
             return;
         }
 
-        services.AddTransient<IImdbMatchingService, ImdbFuzzyStringMatchingService>();
+        services.AddSingleton<IImdbMatchingService, ImdbFuzzyStringMatchingService>();
     }
 }

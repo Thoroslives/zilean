@@ -10,20 +10,49 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
     private LuceneSession? _imdbFilesIndex;
     private DirectoryReader? _reader;
     private IndexSearcher? _searcher;
+    private int _initializationCount;
+    private readonly SemaphoreSlim _populateLock = new(1, 1);
+
+    internal int InitializationCount => _initializationCount;
 
     public async Task PopulateImdbData()
     {
-        _imdbFilesIndex = await IndexImdbDocumentsInMemory();
-        _imdbCache = new();
+        if (_imdbFilesIndex is not null)
+        {
+            return;
+        }
+
+        await _populateLock.WaitAsync();
+        try
+        {
+            if (_imdbFilesIndex is not null)
+            {
+                return;
+            }
+
+            var index = await IndexImdbDocumentsInMemory();
+            _reader = index.Writer.GetReader(applyAllDeletes: true);
+            _searcher = new IndexSearcher(_reader);
+            _imdbCache = new();
+            _imdbFilesIndex = index;
+            _initializationCount++;
+        }
+        finally
+        {
+            _populateLock.Release();
+        }
     }
 
     public void DisposeImdbData()
     {
         _reader?.Dispose();
+        _reader = null;
+        _searcher = null;
         _imdbFilesIndex?.Writer.Dispose();
         _imdbFilesIndex?.Directory.Dispose();
         _imdbFilesIndex?.Dispose();
-        _imdbCache.Clear();
+        _imdbFilesIndex = null;
+        _imdbCache?.Clear();
         _imdbCache = null;
     }
 
@@ -51,9 +80,6 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
                 t.Year,
                 t.Category,
             });
-
-        _reader = _imdbFilesIndex.Writer.GetReader(applyAllDeletes: true);
-        _searcher = new(_reader);
 
         Parallel.ForEach(
             groupedByYearAndCategory, parallelOptions, (torrentGroup, _) =>
