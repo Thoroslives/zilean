@@ -1,17 +1,21 @@
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
+using Microsoft.Extensions.Caching.Memory;
+using Zilean.Database.Services.Common;
 
 namespace Zilean.Database.Services.Lucene;
 
 public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger, ZileanConfiguration configuration) : IImdbMatchingService
 {
-    private ConcurrentDictionary<string, string?>? _imdbCache;
+    private MemoryCache? _imdbCache;
     private LuceneSession? _imdbFilesIndex;
     private DirectoryReader? _reader;
     private IndexSearcher? _searcher;
     private int _initializationCount;
+    private readonly SnapshotStalenessTracker _staleness = new(logger);
     private readonly SemaphoreSlim _populateLock = new(1, 1);
+    private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { Size = 1 };
 
     internal int InitializationCount => _initializationCount;
 
@@ -33,8 +37,12 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
             var index = await IndexImdbDocumentsInMemory();
             _reader = index.Writer.GetReader(applyAllDeletes: true);
             _searcher = new IndexSearcher(_reader);
-            _imdbCache = new();
+            _imdbCache = new MemoryCache(new MemoryCacheOptions
+            {
+                SizeLimit = ImdbCacheConfig.ResolveCacheSize(configuration.Imdb.MatchCacheSize, logger),
+            });
             _imdbFilesIndex = index;
+            _staleness.MarkPopulated();
             _initializationCount++;
         }
         finally
@@ -52,8 +60,9 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
         _imdbFilesIndex?.Directory.Dispose();
         _imdbFilesIndex?.Dispose();
         _imdbFilesIndex = null;
-        _imdbCache?.Clear();
+        _imdbCache?.Dispose();
         _imdbCache = null;
+        _staleness.Reset();
     }
 
     public Task<ConcurrentQueue<TorrentInfo>> MatchImdbIdsForBatchAsync(IEnumerable<TorrentInfo> batch)
@@ -62,6 +71,8 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
         {
             throw new InvalidOperationException("IMDb data has not been loaded yet.");
         }
+
+        _staleness.WarnIfStale(configuration.Imdb.SnapshotMaxAgeHours);
 
         var parallelOptions = new ParallelOptions
         {
@@ -86,7 +97,7 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
             {
                 foreach (var torrent in torrentGroup)
                 {
-                    if (_imdbCache.TryGetValue(torrent.CacheKey(), out var imdbId))
+                    if (_imdbCache!.TryGetValue<string?>(torrent.CacheKey(), out var imdbId))
                     {
                         torrent.ImdbId = imdbId;
                         continue;
@@ -113,7 +124,7 @@ public class ImdbLuceneMatchingService(ILogger<ImdbLuceneMatchingService> logger
 
                         torrent.ImdbId = bestMatch.ImdbId;
 
-                        _imdbCache[torrent.CacheKey()] = bestMatch.ImdbId;
+                        _imdbCache!.Set(torrent.CacheKey(), bestMatch.ImdbId, _cacheEntryOptions);
 
                         updatedTorrents.Enqueue(torrent);
                         continue;
