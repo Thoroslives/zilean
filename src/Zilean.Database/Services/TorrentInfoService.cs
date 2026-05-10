@@ -11,12 +11,12 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
         await dbContext.Database.ExecuteSqlRawAsync("VACUUM (VERBOSE, ANALYZE) \"Torrents\"", cancellationToken: cancellationToken);
     }
 
-    public async Task StoreTorrentInfo(List<TorrentInfo> torrents, int batchSize = 5000)
+    public async Task<StoreResult> StoreTorrentInfo(List<TorrentInfo> torrents, int batchSize = 5000)
     {
         if (torrents.Count == 0)
         {
             logger.LogInformation("No torrents to store.");
-            return;
+            return new StoreResult(Stored: 0, PopulateMs: 0, MatchMs: 0, UpsertMs: 0);
         }
 
         foreach (var torrentInfo in torrents)
@@ -29,6 +29,10 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
         await using var connection = new NpgsqlConnection(Configuration.Database.ConnectionString);
         var imdbMatchingService = serviceScope.ServiceProvider.GetRequiredService<IImdbMatchingService>();
 
+        long populateMs = 0;
+        long matchMs = 0;
+        long upsertMs = 0;
+
         // PopulateImdbData is idempotent and the matcher is a singleton,
         // so this is a no-op after the first ingestion batch in the process.
         // Don't dispose at the end of the method - keep the in-memory state hot
@@ -36,7 +40,9 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
         // when refreshing IMDb data.
         if (Configuration.Imdb.EnableImportMatching)
         {
+            var populateStart = Stopwatch.GetTimestamp();
             await imdbMatchingService.PopulateImdbData();
+            populateMs = (long)Stopwatch.GetElapsedTime(populateStart).TotalMilliseconds;
         }
 
         var bulkConfig = new BulkConfig
@@ -62,12 +68,18 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
             if (Configuration.Imdb.EnableImportMatching)
             {
                 logger.LogInformation("Matching IMDb IDs for batch {CurrentBatch} of {TotalBatches}", currentBatch, chunks.Count);
+                var matchStart = Stopwatch.GetTimestamp();
                 await imdbMatchingService.MatchImdbIdsForBatchAsync(batch);
+                matchMs += (long)Stopwatch.GetElapsedTime(matchStart).TotalMilliseconds;
             }
 
             logger.LogInformation("Storing batch {CurrentBatch} of {TotalBatches}", currentBatch, chunks.Count);
+            var upsertStart = Stopwatch.GetTimestamp();
             await dbContext.BulkInsertOrUpdateAsync(batch, bulkConfig);
+            upsertMs += (long)Stopwatch.GetElapsedTime(upsertStart).TotalMilliseconds;
         }
+
+        return new StoreResult(Stored: torrents.Count, PopulateMs: populateMs, MatchMs: matchMs, UpsertMs: upsertMs);
     }
 
     public async Task<TorrentInfo[]> SearchForTorrentInfoByOnlyTitle(string query)

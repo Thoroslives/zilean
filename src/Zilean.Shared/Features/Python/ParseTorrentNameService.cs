@@ -8,6 +8,7 @@ public class ParseTorrentNameService
     private bool _isInitialized;
     private dynamic? _sys;
     private readonly ILogger<ParseTorrentNameService> _logger;
+    private readonly ZileanConfiguration _configuration;
     public bool IsAvailable => _initAsync.IsCompletedSuccessfully;
 
     private const string ParserScript =
@@ -34,31 +35,34 @@ public class ParseTorrentNameService
         logger.add(lambda msg: print(msg, end=''), format=custom_format, colorize=True)
 
         sem = None
+        VERBOSE = False
 
         async def parse_torrent(info):
             async with sem:
                 title, info_hash = info
                 try:
                     result = parse(title)
-                    logger.info(
-                       f"Title: {light_blue}{title}{reset}, "
-                       f"Parsed Title: {light_green}{result.parsed_title}{reset}, "
-                       f"Is Adult: {light_blue}{result.adult}{reset}, "
-                       f"Is Trash: {light_blue}{result.trash}{reset}")
+                    if VERBOSE:
+                        logger.info(
+                           f"Title: {light_blue}{title}{reset}, "
+                           f"Parsed Title: {light_green}{result.parsed_title}{reset}, "
+                           f"Is Adult: {light_blue}{result.adult}{reset}, "
+                           f"Is Trash: {light_blue}{result.trash}{reset}")
                     return {'infoHash': info_hash, 'result': result}
                 except Exception as e:
                     logger.error(f"Failed to parse title: {red}{title}{reset}, "f"Error: {red}{e}{reset}")
                     return {'infoHash': info_hash, 'result': None, 'error': str(e)}
 
-        def parse_torrent_single(info):
+        def parse_torrent_single(info, verbose):
             title, info_hash = info
             try:
                 result = parse(title)
-                logger.info(
-                   f"Title: {light_blue}{title}{reset}, "
-                   f"Parsed Title: {light_green}{result.parsed_title}{reset}, "
-                   f"Is Adult: {light_blue}{result.adult}{reset}, "
-                   f"Is Trash: {light_blue}{result.trash}{reset}")
+                if verbose:
+                    logger.info(
+                       f"Title: {light_blue}{title}{reset}, "
+                       f"Parsed Title: {light_green}{result.parsed_title}{reset}, "
+                       f"Is Adult: {light_blue}{result.adult}{reset}, "
+                       f"Is Trash: {light_blue}{result.trash}{reset}")
                 return {'infoHash': info_hash, 'result': result}
             except Exception as e:
                 logger.error(f"Failed to parse title: {red}{title}{reset}, "f"Error: {red}{e}{reset}")
@@ -86,13 +90,16 @@ public class ParseTorrentNameService
                     logger.error(f"Batch {red}{batch_number}{reset} failed with error: {red}{e}{reset}")
             return results
 
-        def run_process_batches(info_batches, max_concurrent_tasks):
+        def run_process_batches(info_batches, max_concurrent_tasks, verbose):
+            global VERBOSE
+            VERBOSE = verbose
             return asyncio.run(process_batches(info_batches, max_concurrent_tasks))
         """;
 
-    public ParseTorrentNameService(ILogger<ParseTorrentNameService> logger)
+    public ParseTorrentNameService(ILogger<ParseTorrentNameService> logger, ZileanConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
         _initAsync = InitializePythonEngine();
     }
 
@@ -139,7 +146,8 @@ public class ParseTorrentNameService
                 scope.Exec(ParserScript);
                 gc = scope.Get("gc");
                 runProcessBatches = scope.Get("run_process_batches");
-                results = runProcessBatches(infoBatches, Environment.ProcessorCount);
+                var maxConcurrentTasks = ParserConcurrency.ResolveMaxConcurrentTasks();
+                results = runProcessBatches(infoBatches, maxConcurrentTasks, _configuration.Parsing.VerboseLogging);
 
                 foreach (var result in results)
                 {
@@ -218,7 +226,7 @@ public class ParseTorrentNameService
 
                 _logger.LogInformation("RTN: Parsing {Incoming}", torrent.RawTitle);
 
-                result = runSingle(torrentParsable);
+                result = runSingle(torrentParsable, _configuration.Parsing.VerboseLogging);
                 var parsedResult = result["result"];
                 ParseTorrentTitleResponse parsedResponse = ParseResult(parsedResult);
 
