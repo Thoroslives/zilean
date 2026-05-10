@@ -1,3 +1,4 @@
+using Zilean.Shared.Features.Configuration;
 using Zilean.Shared.Features.Python;
 
 namespace Zilean.Benchmarks.Benchmarks;
@@ -15,7 +16,7 @@ public class PythonParsing
     {
         Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", "/opt/homebrew/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib");
         var logger = Substitute.For<ILogger<ParseTorrentNameService>>();
-        _service = new ParseTorrentNameService(logger);
+        _service = new ParseTorrentNameService(logger, new ZileanConfiguration());
         _oneK = GenerateTorrents(1000);
         _fiveK = GenerateTorrents(5000);
         _tenK = GenerateTorrents(10000);

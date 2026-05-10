@@ -1,4 +1,6 @@
-﻿namespace Zilean.Scraper.Features.Ingestion.Processing;
+﻿using Zilean.Database.Services.Common;
+
+namespace Zilean.Scraper.Features.Ingestion.Processing;
 
 public abstract class GenericProcessor<TInput>(
     ILoggerFactory loggerFactory,
@@ -109,19 +111,24 @@ public abstract class GenericProcessor<TInput>(
 
             if (newTorrents.Count > 0)
             {
+                var parseStart = Stopwatch.GetTimestamp();
                 var parsedTorrents =
                     await parseTorrentNameService.ParseAndPopulateAsync(newTorrents, _configuration.Parsing.BatchSize);
+                var parseMs = (long)Stopwatch.GetElapsedTime(parseStart).TotalMilliseconds;
 
                 var finalizedTorrents = parsedTorrents
                     .AsEnumerable()
                     .FilterBlacklistedTorrents(parsedTorrents, _blacklistedHashes, _configuration, _logger, _processedCounts)
                     .ToList();
 
-                await torrentInfoService.StoreTorrentInfo(finalizedTorrents);
-                _processedCounts.AddProcessed(finalizedTorrents.Count);
+                var storeResult = await torrentInfoService.StoreTorrentInfo(finalizedTorrents);
+                _processedCounts.AddProcessed(storeResult.Stored);
+
+                _logger.LogBatchStageTimings(
+                    currentBatch, parseMs, storeResult.PopulateMs, storeResult.MatchMs, storeResult.UpsertMs);
 
                 _logger.LogInformation("Batch {BatchNumber} complete: {NewCount} new torrents stored, {TotalProcessed} total processed so far",
-                    currentBatch, finalizedTorrents.Count, _processedCounts.TotalProcessed);
+                    currentBatch, storeResult.Stored, _processedCounts.TotalProcessed);
             }
         }
         catch (OperationCanceledException)

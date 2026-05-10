@@ -14,7 +14,7 @@ public class PttPythonTests : IDisposable
             "/opt/homebrew/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib");
 
         var loggerParse = Substitute.For<ILogger<ParseTorrentNameService>>();
-        _parseTorrentNameService = new ParseTorrentNameService(loggerParse);
+        _parseTorrentNameService = new ParseTorrentNameService(loggerParse, new ZileanConfiguration());
     }
 
     [Trait("Category", "RequiresPython")]
