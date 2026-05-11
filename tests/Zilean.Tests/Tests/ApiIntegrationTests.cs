@@ -172,4 +172,39 @@ public class ApiIntegrationTests
         var items = doc.Root!.Element("channel")?.Elements("item");
         items.Should().NotBeNullOrEmpty("parenthesised trailing year should also be extracted");
     }
+
+    [Fact]
+    public async Task Torznab_Search_TrailingYear_FiltersByYear()
+    {
+        // The Matrix seed has Year=1999. Year filter is ±1, so 2050 must exclude it.
+        // Without the fix (year stays in q-string, filter.Year is null), both queries would
+        // return 0 due to trigram failure; with the fix, 1999 narrows correctly and 2050 excludes.
+        var matchingYear = await _client.GetAsync("/torznab/api?t=search&q=The%20Matrix%201999");
+        var nonMatchingYear = await _client.GetAsync("/torznab/api?t=search&q=The%20Matrix%202050");
+
+        matchingYear.StatusCode.Should().Be(HttpStatusCode.OK);
+        nonMatchingYear.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var matchingItems = XDocument.Parse(await matchingYear.Content.ReadAsStringAsync())
+            .Root!.Element("channel")?.Elements("item");
+        var nonMatchingItems = XDocument.Parse(await nonMatchingYear.Content.ReadAsStringAsync())
+            .Root!.Element("channel")?.Elements("item");
+
+        matchingItems.Should().NotBeNullOrEmpty("year 1999 should match The Matrix seed (Year=1999)");
+        nonMatchingItems.Should().BeNullOrEmpty("year 2050 should exclude The Matrix via Year filter ±1");
+    }
+
+    [Fact]
+    public async Task FilteredSearch_TrailingYearInQuery_ReturnsResults()
+    {
+        // /dmm/filtered shares SearchForTorrentInfoFiltered with /torznab/api,
+        // so the trailing-year fix must apply here too.
+        var response = await _client.GetAsync("/dmm/filtered?Query=The%20Matrix%201999");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var results = JsonSerializer.Deserialize<TorrentInfo[]>(await response.Content.ReadAsStringAsync());
+        results.Should().NotBeNull();
+        results!.Should().Contain(t => t.ImdbId == "tt0133093",
+            "trailing year in Query should be extracted and matched against Year filter on /dmm/filtered");
+    }
 }
