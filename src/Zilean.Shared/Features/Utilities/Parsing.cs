@@ -18,6 +18,8 @@ public static partial class Parsing
     private static partial Regex StopWordRegex();
     [GeneratedRegex(@"\s{2,}", RegexOptions.Compiled)]
     private static partial Regex SpaceRemovalRegex();
+    [GeneratedRegex(@"\s+\(?(19\d{2}|20\d{2})\)?\s*$", RegexOptions.Compiled)]
+    private static partial Regex TrailingYearRegex();
 
     public static string NormalizeSpace(string s) => s?.Trim() ?? string.Empty;
 
@@ -201,5 +203,23 @@ public static partial class Parsing
         cleanedQuery = SpaceRemovalRegex().Replace(cleanedQuery, " ").Trim();
 
         return cleanedQuery;
+    }
+
+    public static (string? Query, int? Year) ExtractTrailingYear(string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return (query, null);
+        }
+
+        var match = TrailingYearRegex().Match(query);
+        if (!match.Success)
+        {
+            return (query, null);
+        }
+
+        var year = int.Parse(match.Groups[1].Value);
+        var cleaned = query[..match.Index].TrimEnd();
+        return (cleaned, year);
     }
 }

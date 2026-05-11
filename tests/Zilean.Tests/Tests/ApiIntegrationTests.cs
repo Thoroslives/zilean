@@ -150,4 +150,26 @@ public class ApiIntegrationTests
         var items = doc.Root!.Element("channel")?.Elements("item");
         items.Should().BeNullOrEmpty("books should not appear in movie search");
     }
+
+    [Fact]
+    public async Task Torznab_Search_TrailingYearInQuery_ReturnsResults()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=search&q=The%20Matrix%201999");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().NotBeNullOrEmpty("trailing year in q should be extracted and matched against Year filter");
+    }
+
+    [Fact]
+    public async Task Torznab_Search_ParenthesisedTrailingYear_ReturnsResults()
+    {
+        var response = await _client.GetAsync("/torznab/api?t=search&q=The%20Matrix%20%281999%29");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = XDocument.Parse(await response.Content.ReadAsStringAsync());
+        var items = doc.Root!.Element("channel")?.Elements("item");
+        items.Should().NotBeNullOrEmpty("parenthesised trailing year should also be extracted");
+    }
 }

@@ -110,7 +110,9 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
 
     public async Task<TorrentInfo[]> SearchForTorrentInfoFiltered(TorrentInfoFilter filter, int? limit = null)
     {
-        var cleanQuery = Parsing.CleanQuery(filter.Query);
+        var (queryWithoutYear, extractedYear) = Parsing.ExtractTrailingYear(filter.Query);
+        var cleanQuery = Parsing.CleanQuery(queryWithoutYear);
+        var effectiveYear = filter.Year ?? extractedYear;
         var imdbId = EnsureCorrectFormatImdbId(filter);
 
         return await ExecuteCommandAsync(async connection =>
@@ -137,7 +139,7 @@ public class TorrentInfoService(ILogger<TorrentInfoService> logger, ZileanConfig
             parameters.Add("@Query", cleanQuery);
             parameters.Add("@Season", filter.Season);
             parameters.Add("@Episode", filter.Episode);
-            parameters.Add("@Year", filter.Year);
+            parameters.Add("@Year", effectiveYear);
             parameters.Add("@Language", filter.Language);
             parameters.Add("@Resolution", filter.Resolution);
             parameters.Add("@Category", filter.Category);
