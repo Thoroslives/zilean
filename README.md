@@ -1,12 +1,18 @@
-# Zilean (Maintained Fork)
+# Zilean
 
 <img src="docs/Writerside/images/zilean-logo.jpg" alt="zilean logo" width="300" height="300">
+
+> **Status: No longer actively maintained.**
+>
+> This fork is **50 commits ahead** of upstream ([`iPromKnight/zilean`](https://github.com/iPromKnight/zilean) v3.5.0, last upstream commit May 2025) and contains the bug fixes and improvements listed below: flexible DB config, incremental DMM sync, health checks, books and audiobooks support, observability and log gating, IMDB match cache, search-q-year extraction, and more.
+>
+> The published image (`ghcr.io/thoroslives/zilean:v3.10.1`, also `:latest`) is the last stable build and remains usable. No new feature work is planned. Issues will be triaged best-effort. PRs welcome from anyone willing to take the fork forward.
+>
+> If you'd like to take over active maintenance, open an issue and let's talk.
 
 Zilean is a Torznab indexer for [DebridMediaManager](https://github.com/debridmediamanager/debrid-media-manager) sourced content shared by users.
 It supports films, TV, books, and audiobooks through a single Torznab API, and can be configured as an indexer in Prowlarr, Sonarr, Radarr, Shelfarr, and other *arr applications.
 It can also scrape from your running Zurg instance and from other running Zilean instances.
-
-This is an actively maintained fork of [iPromKnight/zilean](https://github.com/iPromKnight/zilean) (v3.5.0, last upstream commit May 2025).
 
 Upstream documentation: [https://ipromknight.github.io/zilean/](https://ipromknight.github.io/zilean/)
 
@@ -22,7 +28,7 @@ ghcr.io/thoroslives/zilean:latest
 
 ## Fork Changes
 
-This is an actively maintained fork with improvements to reliability, search quality, security, and media type support. Key additions include book/audiobook category detection, graceful degradation, incremental DMM sync, and flexible database configuration.
+This fork includes improvements to reliability, search quality, security, and media type support over upstream v3.5.0. Key additions include book/audiobook category detection, graceful degradation, incremental DMM sync, and flexible database configuration.
 
 See [Releases](https://github.com/Thoroslives/zilean/releases) for the full changelog.
 
