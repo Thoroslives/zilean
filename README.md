@@ -2,13 +2,13 @@
 
 <img src="docs/Writerside/images/zilean-logo.jpg" alt="zilean logo" width="300" height="300">
 
-> **Status: No longer actively maintained.**
+> **Status: No longer maintained. Development continues in a community fork, [h1n054ur/zilean](https://github.com/h1n054ur/zilean).**
 >
-> This fork is **50 commits ahead** of upstream ([`iPromKnight/zilean`](https://github.com/iPromKnight/zilean) v3.5.0, last upstream commit May 2025) and contains the bug fixes and improvements listed below: flexible DB config, incremental DMM sync, health checks, books and audiobooks support, observability and log gating, IMDB match cache, search-q-year extraction, and more.
+> h1n054ur offered to take the fork on in [#25](https://github.com/Thoroslives/zilean/issues/25), and I accepted on 26 October 2026. Their fork builds on this one. It includes the fix for the DMM hashlist layout change of 30 September 2026 ([#26](https://github.com/Thoroslives/zilean/pull/26)) and publishes `ghcr.io/h1n054ur/zilean`.
 >
-> The published image (`ghcr.io/thoroslives/zilean:v3.10.1`, also `:latest`) is the last stable build and remains usable. No new feature work is planned. Issues will be triaged best-effort. PRs welcome from anyone willing to take the fork forward.
+> I haven't reviewed that fork's code or image. Its [FORK.md](https://github.com/h1n054ur/zilean/blob/main/FORK.md) lists what it changes, so read that before you switch. Their README has a [section for people coming from this image](https://github.com/h1n054ur/zilean#coming-from-ghcriothorosliveszilean) with the switching steps. Back up your database first. Its migrations change existing data, and nobody has tested a return to this image afterwards.
 >
-> If you'd like to take over active maintenance, open an issue and let's talk.
+> The last image from this repository is `ghcr.io/thoroslives/zilean:v3.10.1`, also tagged `:latest`. It does not read hashlists that DMM published after 30 September 2026. Send new issues and pull requests to the new fork.
 
 Zilean is a Torznab indexer for [DebridMediaManager](https://github.com/debridmediamanager/debrid-media-manager) sourced content shared by users.
 It supports films, TV, books, and audiobooks through a single Torznab API, and can be configured as an indexer in Prowlarr, Sonarr, Radarr, Shelfarr, and other *arr applications.
